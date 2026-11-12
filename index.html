@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Protected Stream Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    body { background: #0f0f0f; color: white; font-family: sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    video { width: 90%; max-width: 800px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); background: #000; }
+  </style>
+</head>
+<body>
+  <video id="video" controls playsinline></video>
+  <script>
+    const video = document.getElementById('video');
+    const videoSrc = 'https://deepwithdarby.github.io/anti-1dm-stream-test/output.m3u8';
+    const hexKey = 'c17c2b1590160c785f41bcf3a2070cb3';
+
+    function hexToBytes(hex) {
+      const bytes = new Uint8Array(hex.length / 2);
+      for (let i = 0; i < hex.length; i += 2) {
+        bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+      }
+      return bytes.buffer;
+    }
+
+    if (Hls.isSupported()) {
+      const hls = new Hls({
+        loader: class CustomLoader extends Hls.DefaultConfig.loader {
+          load(context, config, callbacks) {
+            if (context.url.includes('fake.key')) {
+              const keyBuffer = hexToBytes(hexKey);
+              callbacks.onSuccess({ data: keyBuffer, url: context.url }, { loaded: 16, total: 16 }, context);
+              return;
+            }
+            super.load(context, config, callbacks);
+          }
+        }
+      });
+      hls.loadSource(videoSrc);
+      hls.attachMedia(video);
+    }
+  </script>
+</body>
+</html>
